@@ -15,4 +15,9 @@ class Student extends Model
     {
         return $this->hasMany(Score::class);
     }
+    public function scopeSearch($query, $search)
+    {
+        return $query->where('name', 'like', "%$search%")
+                     ->orWhere('id', $search);
+    }
 }

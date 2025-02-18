@@ -7,11 +7,15 @@ use Illuminate\Http\Request;
 
 class StudentController extends Controller
 {
-    // Hiển thị danh sách sinh viên
-    public function index()
+    // Hiển thị danh sách sinh viên với chức năng tìm kiếm
+    public function index(Request $request)
     {
-        $students = Student::all();
-        return view('students.index', compact('students'));
+        $search = $request->input('search');
+        $students = Student::when($search, function ($query, $search) {
+            return $query->search($search);
+        })->get();
+
+        return view('students.index', compact('students', 'search'));
     }
 
     // Hiển thị form thêm sinh viên
@@ -23,17 +27,14 @@ class StudentController extends Controller
     // Lưu sinh viên mới vào database
     public function store(Request $request)
     {
-        // Validate dữ liệu
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:students,email',
             'phone' => 'nullable|string|max:20',
         ]);
 
-        // Tạo mới sinh viên với dữ liệu đã validate
         Student::create($validatedData);
 
-        // Chuyển hướng với thông báo thành công
         return redirect()->route('students.index')->with('success', 'Sinh viên đã được thêm thành công!');
     }
 
@@ -52,27 +53,22 @@ class StudentController extends Controller
     // Cập nhật thông tin sinh viên
     public function update(Request $request, Student $student)
     {
-        // Validate dữ liệu
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:students,email,' . $student->id,
             'phone' => 'nullable|string|max:20',
         ]);
 
-        // Cập nhật sinh viên với dữ liệu đã validate
         $student->update($validatedData);
 
-        // Chuyển hướng với thông báo thành công
         return redirect()->route('students.index')->with('success', 'Thông tin sinh viên đã được cập nhật!');
     }
 
     // Xóa sinh viên
     public function destroy(Student $student)
     {
-        // Xóa sinh viên
         $student->delete();
 
-        // Chuyển hướng với thông báo thành công
         return redirect()->route('students.index')->with('success', 'Sinh viên đã được xóa thành công!');
     }
 }
